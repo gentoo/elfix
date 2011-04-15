@@ -601,6 +601,8 @@ LIBOBJS
 EGREP
 GREP
 CPP
+TEST_FALSE
+TEST_TRUE
 has_yasm
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
@@ -683,6 +685,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
+enable_tests
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1310,6 +1313,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-tests          enable tests
 
 Some influential environment variables:
   CC          C compiler command
@@ -3577,7 +3581,12 @@ else
 fi
 
 
-# Extract the first word of "yasm", so it can be a program name with args.
+# Check whether --enable-tests was given.
+if test "${enable_tests+set}" = set; then :
+  enableval=$enable_tests;
+		if test "x$enable_tests" = "xyes"; then :
+
+				# Extract the first word of "yasm", so it can be a program name with args.
 set dummy yasm; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -3615,9 +3624,24 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "x$has_yasm" = "xno"; then :
+				if test "x$has_yasm" = "xno"; then :
   as_fn_error "\"Missing yasm assembler\"" "$LINENO" 5
 fi
+
+
+fi
+
+
+fi
+
+ if test "x$has_yasm" = "xyes"; then
+  TEST_TRUE=
+  TEST_FALSE='#'
+else
+  TEST_TRUE='#'
+  TEST_FALSE=
+fi
+
 
 # Checks for libraries.
 
@@ -4281,6 +4305,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${TEST_TRUE}" && test -z "${TEST_FALSE}"; then
+  as_fn_error "conditional \"TEST\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
