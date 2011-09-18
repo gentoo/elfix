@@ -1,3 +1,7 @@
+2011-08-18  Anthony G. Basile <blueness@gentoo.org>
+
+	* Bump version 0.2.x, added paxctl-ng
+
 2011-04-14  Anthony G. Basile <blueness@gentoo.org>
 
 	* Initial release
