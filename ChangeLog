@@ -21,6 +21,7 @@
 2011-04-14  Anthony G. Basile <blueness@gentoo.org>
 
 	* Initial release
+	* Add fix-gnustack
 -----
 
 Copyright (C) 2011  Anthony G. Basile
