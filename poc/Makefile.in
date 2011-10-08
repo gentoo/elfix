@@ -32,7 +32,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-noinst_PROGRAMS = mangle-paxflags$(EXEEXT) bad-mmap$(EXEEXT)
+noinst_PROGRAMS = bad-mmap$(EXEEXT) mangle-paxflags$(EXEEXT) \
+	paxctl-xattr$(EXEEXT)
 subdir = poc
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -50,6 +51,9 @@ bad_mmap_LDADD = $(LDADD)
 am_mangle_paxflags_OBJECTS = mangle-paxflags.$(OBJEXT)
 mangle_paxflags_OBJECTS = $(am_mangle_paxflags_OBJECTS)
 mangle_paxflags_DEPENDENCIES =
+am_paxctl_xattr_OBJECTS = paxctl-xattr.$(OBJEXT)
+paxctl_xattr_OBJECTS = $(am_paxctl_xattr_OBJECTS)
+paxctl_xattr_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -58,8 +62,10 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(bad_mmap_SOURCES) $(mangle_paxflags_SOURCES)
-DIST_SOURCES = $(bad_mmap_SOURCES) $(mangle_paxflags_SOURCES)
+SOURCES = $(bad_mmap_SOURCES) $(mangle_paxflags_SOURCES) \
+	$(paxctl_xattr_SOURCES)
+DIST_SOURCES = $(bad_mmap_SOURCES) $(mangle_paxflags_SOURCES) \
+	$(paxctl_xattr_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -150,9 +156,10 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+bad_mmap_SOURCES = bad-mmap.c
 mangle_paxflags_SOURCES = mangle-paxflags.c
 mangle_paxflags_LDADD = -lelf
-bad_mmap_SOURCES = bad-mmap.c
+paxctl_xattr_SOURCES = paxctl-xattr.c
 check_SCRIPTS = poc.sh
 all: all-am
 
@@ -197,6 +204,9 @@ bad-mmap$(EXEEXT): $(bad_mmap_OBJECTS) $(bad_mmap_DEPENDENCIES)
 mangle-paxflags$(EXEEXT): $(mangle_paxflags_OBJECTS) $(mangle_paxflags_DEPENDENCIES) 
 	@rm -f mangle-paxflags$(EXEEXT)
 	$(LINK) $(mangle_paxflags_OBJECTS) $(mangle_paxflags_LDADD) $(LIBS)
+paxctl-xattr$(EXEEXT): $(paxctl_xattr_OBJECTS) $(paxctl_xattr_DEPENDENCIES) 
+	@rm -f paxctl-xattr$(EXEEXT)
+	$(LINK) $(paxctl_xattr_OBJECTS) $(paxctl_xattr_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -206,6 +216,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bad-mmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mangle-paxflags.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/paxctl-xattr.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

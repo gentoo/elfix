@@ -1,5 +1,21 @@
+2011-10-08  Anthony G. Basile <blueness@gentoo.org>
+
+	* Release 0.2.3
+	* Add python pax module and revdep-pax
+
+2011-10-03  Anthony G. Basile <blueness@gentoo.org>
+
+	* Release 0.2.2
+	* Code cleanup and fixed make check
+
+2011-09-27  Anthony G. Basile <blueness@gentoo.org>
+
+	* Release 0.2.1
+	* Code cleanup and fix PT_PAX flag setting
+
 2011-08-18  Anthony G. Basile <blueness@gentoo.org>
 
+	* Release 0.2.0
 	* Bump version 0.2.x, added paxctl-ng
 
 2011-04-14  Anthony G. Basile <blueness@gentoo.org>
