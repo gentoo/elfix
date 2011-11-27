@@ -1,6 +1,7 @@
 
 2011-11-26
 
+	* release 0.4.0
 	* src/paxctl-ng.c: made verbosity more consistant
 	* src/paxctl-ng.c: build with/without xattr support
 	* scripts/{setup.py,paxmodule.c}: build with/without xattr support
