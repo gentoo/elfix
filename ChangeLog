@@ -1,5 +1,6 @@
 2011-12-28
 
+	* release 0.4.2
 	* misc/test-revdep-pax: added a test package for revdep-pax
 	* scripts/revdep-pax: added an allyes option
 	* scripts/revdep-pax: employ a more sophisticated logic for markings
