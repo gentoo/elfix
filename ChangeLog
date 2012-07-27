@@ -1,5 +1,6 @@
 2012-07-27
 
+	* Release 0.5.1
 	* switch from yasm to gcc for assembler for arches other than
 	x86 and amd64
 	* opening an ELF_C_RDWR does not work for either libelf or

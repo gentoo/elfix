@@ -44,16 +44,30 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_bad_gnustack_OBJECTS = bad-gnustack.$(OBJEXT)
+am_bad_gnustack_OBJECTS = bad64.$(OBJEXT) bad32.$(OBJEXT)
 bad_gnustack_OBJECTS = $(am_bad_gnustack_OBJECTS)
+bad_gnustack_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-am__depfiles_maybe = depfiles
-am__mv = mv -f
+CCASCOMPILE = $(CCAS) $(AM_CCASFLAGS) $(CCASFLAGS)
+AM_V_CCAS = $(am__v_CCAS_$(V))
+am__v_CCAS_ = $(am__v_CCAS_$(AM_DEFAULT_VERBOSITY))
+am__v_CCAS_0 = @echo "  CCAS  " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC    " $@;
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(bad_gnustack_SOURCES)
 DIST_SOURCES = $(bad_gnustack_SOURCES)
 ETAGS = etags
@@ -61,11 +75,15 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
+CCAS = @CCAS@
+CCASDEPMODE = @CCASDEPMODE@
+CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
@@ -146,18 +164,15 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-bad_gnustack_SOURCES = bad-gnustack.c
-bad_gnustack_DEPENDENCIES = bad-asm.o
-bad_gnustack_LDADD = bad-asm.o
-EXTRA_DIST = bad64.asm bad32.asm
+bad_gnustack_SOURCES = bad64.s bad32.s
 ARCH = $(shell uname -m | sed -e 's/i./x/')
 check_SCRIPTS = test.sh
 TEST = $(check_SCRIPTS)
-CLEANFILES = bad-asm.o test.sh
+CLEANFILES = *.o test.sh
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .o .obj .s
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -191,9 +206,6 @@ $(am__aclocal_m4_deps):
 
 clean-noinstPROGRAMS:
 	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
-bad-gnustack$(EXEEXT): $(bad_gnustack_OBJECTS) $(bad_gnustack_DEPENDENCIES) 
-	@rm -f bad-gnustack$(EXEEXT)
-	$(LINK) $(bad_gnustack_OBJECTS) $(bad_gnustack_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -201,21 +213,13 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bad-gnustack.Po@am__quote@
+.s.o:
+	$(AM_V_CCAS) @AM_BACKSLASH@
+	$(CCASCOMPILE) -c -o $@ $<
 
-.c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
-
-.c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+.s.obj:
+	$(AM_V_CCAS) @AM_BACKSLASH@
+	$(CCASCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -335,7 +339,6 @@ clean: clean-am
 clean-am: clean-generic clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -381,7 +384,6 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -415,17 +417,17 @@ uninstall-am:
 	uninstall-am
 
 
-bad-asm.o: bad64.asm bad32.asm
-	[[ "$(ARCH)" == "x86" ]] && yasm -f elf -m x86 bad32.asm && mv bad32.o bad-asm.o || true
-	[[ "$(ARCH)" == "x86_64" ]] && yasm -f elf -m amd64 bad64.asm && mv bad64.o bad-asm.o || true
+bad-gnustack: bad64.s bad32.s
+	[[ "$(ARCH)" == "x86" ]]    && $(CCAS) -m32 -o bad-gnustack bad32.s || true
+	[[ "$(ARCH)" == "x86_64" ]] && $(CCAS) -m64 -o bad-gnustack bad64.s || true
 
 test.sh:
 	@echo "================================================================================"
 	@echo
-	@echo "Fixing Bad GNU_STACK Elf"
+	@echo "Before GNU_STACK Elf: "
 	@../../src/fix-gnustack -f bad-gnustack
 	@echo
-	@echo "Fixed Bad GNU_STACK Elf"
+	@echo "After GNU_STACK Elf: "
 	@../../src/fix-gnustack bad-gnustack
 	@echo
 	@echo "================================================================================"
