@@ -6,6 +6,7 @@ stamp-h1
 #
 .deps
 *.o
+*.s
 *.swp
 fix-gnustack
 paxctl-ng
