@@ -1,5 +1,6 @@
 2012-07-29
 
+	* Release 0.5.2
 	* remove unnecessary check for yasm in configure.ac
 	* make tests/gnustack machine independant by generating
 	native assembly using gcc
