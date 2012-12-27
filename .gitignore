@@ -21,3 +21,6 @@ paxctl-ng
 bad-gnustack
 daemon
 revdepbin
+#
+scripts/build
+misc/__pycache__
