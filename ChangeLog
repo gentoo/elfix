@@ -1,3 +1,9 @@
+2014-06-07
+
+	* Prepare release 0.8.5
+	* Switch from error() to errx() in fix-gnustack.c and paxctl-ng.c to
+	make the code portable to musl (and BSD).
+
 2013-09-26
 
 	* Return EXIT_SUCCESS if user.pax.flags is done after paxctl-ng -d.  This
