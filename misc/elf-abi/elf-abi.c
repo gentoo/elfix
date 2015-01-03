@@ -62,7 +62,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <endian.h>
 
 /* We steal this from <elf.h> but don't include it so as to not increase our dependancies. */
 #define	ELFMAG		"\177ELF"
@@ -102,7 +101,6 @@ E_MIPS_ABI_EABI64  = 0x00004000
 
 #define EF_ARM_NEW_ABI		0x80
 #define EF_ARM_OLD_ABI		0x100
-
 
 /*
 def compute_suffix_mips(elf_header):
@@ -145,15 +143,6 @@ def compute_multilib_id(elf_header):
 		multilib_id = "%s_%s" % (prefix, suffix)
 
 	return multilib_id
-*/
-
-
-#define bswap_16(x) ((uint16_t)((((x) >> 8) & 0xff) | (((x) & 0xff) << 8)))
-
-/*
-#define bswap_32(x) \
-     ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
-      (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
 */
 
 #define MAX_IDENT	32
@@ -206,7 +195,7 @@ main(int argc, char* argv[])
 			printf("Unknown bit\n");
 	}
 
-	/* Little or Big Endian */
+	/* Little or Big Endian? */
 	if (read(fd, &ei_data, 1) == -1)
 		err(1, "read() ei_data failed");
 	switch (ei_data) {
@@ -223,17 +212,13 @@ main(int argc, char* argv[])
 			printf("Unknown Endian\n");
 	}
 
-	/* seek to e_macine = 16 bytes (e_ident[])) + 2 bytes (e_type which is Elf32_Half/Elf64_Half) */
+	/* Seek to e_macine = 16 bytes (e_ident[])) + 2 bytes (e_type which is Elf32_Half/Elf64_Half) */
 	if (lseek(fd, 18, SEEK_SET) == -1)
 		err(1, "lseek() e_machine failed");
 
 	/* What is the arch? */
 	if (read(fd, &e_machine, 2) == -1)
 		err(1, "read() e_machine failed");
-	//if (endian == 0)
-	//	e_machine = bswap_16(e_machine);
-	printf("Machine =%d\n", e_machine);
-
 	switch(e_machine) {
 		case EM_ALPHA:
 		case EM_FAKE_ALPHA:
@@ -284,9 +269,7 @@ main(int argc, char* argv[])
 		default:
 			arch = "unknown";
 	}
-
 	printf("%s\n", arch);
-
 
 	/*
 	e_data_offset = 
@@ -295,14 +278,7 @@ main(int argc, char* argv[])
 	if (read(fd, &e_flags, 2) == -1)
 		err(1, "read() e_machine failed");
 	*/
-
-	memset(ident, 0, MAX_IDENT);
-
-	close(fd);
-	exit(EXIT_SUCCESS);
-}
-
-/*
+	/*
 	# E_ENTRY + 3 * sizeof(uintN)
 	e_flags_offset = E_ENTRY + 3 * width // 8
 	f.seek(e_flags_offset)
@@ -311,4 +287,10 @@ main(int argc, char* argv[])
 	return _elf_header(ei_class, ei_data, e_machine, e_flags)
 
 	multilib_id = compute_multilib_id(elf_header)
-*/
+	*/
+
+	memset(ident, 0, MAX_IDENT);
+
+	close(fd);
+	exit(EXIT_SUCCESS);
+}
