@@ -7,15 +7,15 @@
  *
  * Supported identifiers:
  *
- *	alpha_32
- *	arm_{oabi32,32,64}
- *	hppa_32,64
- *	ia_64
- *	m68k_32
+ *	alpha_{32,64}
+ *	arm_{32,64}
+ *	hppa_{32,64}
+ *	ia_{32,64}
+ *	m68k_{32,64}
  *	mips_{n32,n64,o32}
  *	ppc_{32,64}
- *	s390_32
- *	sh_32
+ *	s390_{32,64}
+ *	sh_{32,64}
  *	sparc_{32,64}
  *	x86_{32,x32,64}
  *
@@ -34,7 +34,6 @@
  * REFERENCE:
  *
  *   http://www.sco.com/developers/gabi/2000-07-17/ch4.eheader.html
- *
  *
  * Copyright 2015 Anthony G. Basile - <blueness@gentoo.org>
  * Copyright 2015 Zac Medico - <zmedico@gentoo.org>
@@ -102,64 +101,91 @@ E_MIPS_ABI_EABI64  = 0x00004000
 #define EF_ARM_NEW_ABI		0x80
 #define EF_ARM_OLD_ABI		0x100
 
-/*
-def compute_suffix_mips(elf_header):
-	name = None
-	mips_abi = elf_header.e_flags & EF_MIPS_ABI
-	if mips_abi:
-		if mips_abi == E_MIPS_ABI_O32:
-			name = "o32"
-		elif mips_abi == E_MIPS_ABI_O64:
-			name = "o64"
-		elif mips_abi == E_MIPS_ABI_EABI32:
-			name = "eabi32"
-		elif mips_abi == E_MIPS_ABI_EABI64:
-			name = "eabi64"
 
-	elif elf_header.e_flags & EF_MIPS_ABI2:
-		name = "n32"
-	elif elf_header.ei_class == ELFCLASS64:
-		name = "n64"
+int
+get_wordsize(uint8_t ei_class)
+{
+	switch (ei_class) {
+		case ELFCLASS32:
+			return 32;
+		case ELFCLASS64:
+			return 64;
+		default:
+			return 0;
+	}
+}
 
-	return name
 
-def compute_multilib_id(elf_header):
-	prefix = machine_prefix_map.get(elf_header.e_machine)
-	suffix = None
+int
+get_endian(uint8_t ei_data)
+{
+	switch (ei_data) {
+		case ELFDATA2LSB:
+			return -1;
+		case ELFDATA2MSB:
+			return 1;
+		default:
+			return 0;
+	}
+}
 
-	if prefix == "mips":
-		suffix = compute_suffix_mips(elf_header)
-	elif elf_header.ei_class == ELFCLASS64:
-		suffix = "64"
-	elif elf_header.ei_class == ELFCLASS32:
-		if elf_header.e_machine == EM_X86_64:
-			suffix = "x32"
-		else:
-			suffix = "32"
 
-	if prefix is None or suffix is None:
-		multilib_id = None
-	else:
-		multilib_id = "%s_%s" % (prefix, suffix)
-
-	return multilib_id
-*/
-
-#define MAX_IDENT	32
+char *
+get_abi(uint16_t e_machine, int width, uint32_t e_flags)
+{
+	switch(e_machine) {
+		case EM_ALPHA:
+		case EM_FAKE_ALPHA:
+			return "alpha";
+		case EM_X86_64:
+			return "amd64";
+		case EM_ARM:
+			return "arm";
+		case EM_AARCH64:
+			return "arm64";
+		case EM_68K:
+			return "m68k";
+		case EM_MIPS_RS3_LE:
+		case EM_MIPS:
+			return "mips";
+		case EM_IA_64:
+			return "ia64";
+		case EM_PARISC:
+			return "hppa";
+		case EM_PPC:
+			return "ppc";
+		case EM_PPC64:
+			return "ppc64";
+		case EM_S390:
+			return "s390";
+		case EM_SH:
+			return "sh";
+		case EM_SPARC32PLUS:
+		case EM_SPARCV9:
+		case EM_SPARC:
+			return "sparc";
+		case EM_386:
+			return "x86";
+		default:
+			return "unknown_arch";
+	}
+}
 
 int
 main(int argc, char* argv[])
 {
-	char ident[MAX_IDENT];		/* The Gentoo standard arch_abi identifier.		*/
-	char *arch;			/* The Gentoo architecture identifier.			*/
-	int fd;
-	struct stat s;
+	int width;			/* Machine word size.  Either 32 or 64 bits.		*/
+	int endian;			/* Endian, -1 = little, 1 = big				*/
+	char *abi;			/* Abi name from glibc's <bits/syscall.h>		*/
+
+	int fd;				/* file descriptor for opened Elf object.		*/
+	struct stat s;			/* stat on opened Elf object.				*/
 	char magic[4];			/* magic number at the begining of the file		*/
-	uint8_t ei_class, width;	/* width = 8 bytes for 32-bits, 16 bytes for 64-bits.	*/
-	uint8_t ei_data, endian;	/* endian = 0 for little, 1 for big endian.		*/
+	uint8_t ei_class;		/* ei_class is one byte of e_ident[]			*/
+	uint8_t ei_data;		/* ei_data is one byte of e_ident[]			*/
 	uint16_t e_machine;		/* Size is Elf32_Half or Elf64_Half.  Both are 2 bytes.	*/
 	uint32_t e_flags;		/* Size is Elf32_Word or Elf64_Word.  Both are 4 bytes.	*/
-	uint64_t e_flags_offset;	/* Wide enough for either 32 or 64 bits.		*/
+	uint64_t e_machine_offset, e_flags_offset;  /* Wide enough for either 32 or 64 bits.	*/
 
 	/* Is the second parameter a regular file? */
 	if (argc != 2)
@@ -177,120 +203,73 @@ main(int argc, char* argv[])
 	if (strncmp(magic, ELFMAG, 4) != 0)
 		errx(1, "%s is not an ELF object", argv[1]);
 
-
 	/* 32 or 64 bits? */
 	if (read(fd, &ei_class, 1) == -1)
 		err(1, "read() ei_class failed");
-	switch (ei_class) {
-		case ELFCLASS32:
-			width = 4;
-			printf("32 bit\n");
-			break;
-		case ELFCLASS64:
-			width = 8;
-			printf("64 bit\n");
-			break;
-		default:
-			width = 0;
-			printf("Unknown bit\n");
-	}
+	width = get_wordsize(ei_class);
 
 	/* Little or Big Endian? */
 	if (read(fd, &ei_data, 1) == -1)
 		err(1, "read() ei_data failed");
-	switch (ei_data) {
-		case ELFDATA2LSB:
-			endian = 0;
-			printf("Little Endian\n");
-			break;
-		case ELFDATA2MSB:
-			endian = 1;
-			printf("Big Endian\n");
-			break;
-		default:
-			endian = -1;
-			printf("Unknown Endian\n");
-	}
+	endian = get_endian(ei_data);
 
-	/* Seek to e_macine = 16 bytes (e_ident[])) + 2 bytes (e_type which is Elf32_Half/Elf64_Half) */
-	if (lseek(fd, 18, SEEK_SET) == -1)
+	/*
+	All Elf files begin with the following Elf header:
+	unsigned char   e_ident[EI_NIDENT];	- 16 bytes
+	Elf32_Half      e_type;			- 2 bytes
+	Elf32_Half      e_machine;		- 2 bytes
+	Elf32_Word      e_version;		- 4 bytes
+	Elf32_Addr      e_entry;		- 4 bytes or 8 bytes for Elf64
+	Elf32_Off       e_phoff;		- 4 bytes or 8 bytes for Elf64
+	Elf32_Off       e_shoff;		- 4 bytes or 8 bytes for Elf64
+	Elf32_Word      e_flags;		- 4 bytes
+
+	Seek to e_machine = 18 bytes.
+	Seek to e_flags   = 36 bytes (Elf32) or 48 bytes (Elf64)
+	*/
+	e_machine_offset = 18;
+	if (width == 32)
+		e_flags_offset = 36;
+	else
+		e_flags_offset = 48;
+
+	/* What is the abi? */
+	if (lseek(fd, e_machine_offset, SEEK_SET) == -1)
 		err(1, "lseek() e_machine failed");
-
-	/* What is the arch? */
 	if (read(fd, &e_machine, 2) == -1)
 		err(1, "read() e_machine failed");
-	switch(e_machine) {
-		case EM_ALPHA:
-		case EM_FAKE_ALPHA:
-			arch = "alpha";
-			break;
-		case EM_X86_64:
-			arch = "amd64";
-			break;
-		case EM_ARM:
-			arch = "arm";
-			break;
-		case EM_AARCH64:
-			arch = "arm64";
-			break;
-		case EM_68K:
-			arch = "m68k";
-			break;
-		case EM_MIPS_RS3_LE:
-		case EM_MIPS:
-			arch = "mips";
-			break;
-		case EM_IA_64:
-			arch = "ia64";
-			break;
-		case EM_PARISC:
-			arch = "hppa";
-			break;
-		case EM_PPC:
-			arch = "ppc";
-			break;
-		case EM_PPC64:
-			arch = "ppc64";
-			break;
-		case EM_S390:
-			arch = "s390";
-			break;
-		case EM_SH:
-			arch = "sh";
-			break;
-		case EM_SPARC32PLUS:
-		case EM_SPARCV9:
-		case EM_SPARC:
-			arch = "sparc";
-			break;
-		case EM_386:
-			arch = "x86";
-			break;
-		default:
-			arch = "unknown";
-	}
-	printf("%s\n", arch);
 
-	/*
-	e_data_offset = 
-	if (lseek(fd, 18, SEEK_SET) == -1)
-		err(1, "lseek() e_machine failed");
+	if (lseek(fd, e_flags_offset, SEEK_SET) == -1)
+		err(1, "lseek() e_flags failed");
 	if (read(fd, &e_flags, 2) == -1)
-		err(1, "read() e_machine failed");
-	*/
-	/*
-	# E_ENTRY + 3 * sizeof(uintN)
-	e_flags_offset = E_ENTRY + 3 * width // 8
-	f.seek(e_flags_offset)
-	e_flags = uint32(f.read(4))
+		err(1, "read() e_flags failed");
 
-	return _elf_header(ei_class, ei_data, e_machine, e_flags)
+	abi = get_abi(e_machine, width, e_flags);
 
-	multilib_id = compute_multilib_id(elf_header)
-	*/
+	printf("%s\n", abi);
 
-	memset(ident, 0, MAX_IDENT);
 
+/*
+	if (!strcmp(arch, "mips")) ;
+		switch (e_flags & EF_MIPS_ABI) {
+			case E_MIPS_ABI_O32:
+				abi = "o32";
+				break;
+
+		if mips_abi == E_MIPS_ABI_O32:
+			name = "o32"
+		elif mips_abi == E_MIPS_ABI_O64:
+			name = "o64"
+		elif mips_abi == E_MIPS_ABI_EABI32:
+			name = "eabi32"
+		elif mips_abi == E_MIPS_ABI_EABI64:
+			name = "eabi64"
+	elif elf_header.e_flags & EF_MIPS_ABI2:
+		name = "n32"
+	elif elf_header.ei_class == ELFCLASS64:
+		name = "n64"
+		}
+*/
 	close(fd);
 	exit(EXIT_SUCCESS);
 }
