@@ -67,8 +67,6 @@
 
 #define ELFCLASS32	1		/* 32-bit objects */
 #define ELFCLASS64	2		/* 64-bit objects */
-#define ELFDATA2LSB	1		/* 2's complement, little endian */
-#define ELFDATA2MSB	2		/* 2's complement, big endian */
 
 #define EM_SPARC	 2		/* SUN SPARC */
 #define EM_386		 3		/* Intel 80386 */
@@ -110,20 +108,6 @@ get_wordsize(uint8_t ei_class)
 			return 32;
 		case ELFCLASS64:
 			return 64;
-		default:
-			return 0;
-	}
-}
-
-
-int
-get_endian(uint8_t ei_data)
-{
-	switch (ei_data) {
-		case ELFDATA2LSB:
-			return -1;
-		case ELFDATA2MSB:
-			return 1;
 		default:
 			return 0;
 	}
@@ -175,14 +159,12 @@ int
 main(int argc, char* argv[])
 {
 	int width;			/* Machine word size.  Either 32 or 64 bits.		*/
-	int endian;			/* Endian, -1 = little, 1 = big				*/
 	char *abi;			/* Abi name from glibc's <bits/syscall.h>		*/
 
 	int fd;				/* file descriptor for opened Elf object.		*/
 	struct stat s;			/* stat on opened Elf object.				*/
 	char magic[4];			/* magic number at the begining of the file		*/
 	uint8_t ei_class;		/* ei_class is one byte of e_ident[]			*/
-	uint8_t ei_data;		/* ei_data is one byte of e_ident[]			*/
 	uint16_t e_machine;		/* Size is Elf32_Half or Elf64_Half.  Both are 2 bytes.	*/
 	uint32_t e_flags;		/* Size is Elf32_Word or Elf64_Word.  Both are 4 bytes.	*/
 	uint64_t e_machine_offset, e_flags_offset;  /* Wide enough for either 32 or 64 bits.	*/
@@ -207,11 +189,6 @@ main(int argc, char* argv[])
 	if (read(fd, &ei_class, 1) == -1)
 		err(1, "read() ei_class failed");
 	width = get_wordsize(ei_class);
-
-	/* Little or Big Endian? */
-	if (read(fd, &ei_data, 1) == -1)
-		err(1, "read() ei_data failed");
-	endian = get_endian(ei_data);
 
 	/*
 	All Elf files begin with the following Elf header:
