@@ -78,13 +78,12 @@
 #define EM_PPC		20		/* ppc */
 #define EM_PPC64	21		/* ppc64 */
 #define EM_S390		22		/* s390 */
-#define EM_SH		42		/* Hitachi SH */
-#define EM_SPARC32PLUS	18		/* sparc 32-bit */
-#define EM_SPARCV9	43		/* sparc 64-bit */
+#define EM_SH		42		/* sh */
+#define EM_SPARC32PLUS	18		/* sparc (32-bit) */
+#define EM_SPARCV9	43		/* sparc (64-bit) */
 #define EM_386		3		/* x86 */
 #define EM_X86_64	62		/* amd64 */
 
-/* The arm and mips ABI flags housed in e_flags */
 #define EF_MIPS_ABI2		0x00000020	/* Mask for mips n32 ABI */
 #define EF_ARM_EABIMASK		0XFF000000	/* Mask for arm EABI - we dont' destinguish versions */
 
@@ -218,9 +217,12 @@ read_endian(int fd, size_t count, int endian)
 	uint8_t data;
 	uint64_t value = 0;
 
+	if (count > 8)
+		errx(1, "Max width exceeded in read_endian()");
+
 	for(i = 0; i < count; i++) {
 		if (read(fd, &data, 1) == -1)
-			errx(1, "read() ei_class failed");
+			errx(1, "read() in read_endian() failed");
 		if (endian)
 			value += data << 8 * (count-i-1);
 		else
@@ -243,7 +245,6 @@ main(int argc, char* argv[])
 	char magic[4];			/* magic number at the begining of the file		*/
 	uint8_t ei_class;		/* ei_class is one byte of e_ident[]			*/
 	uint8_t ei_data;		/* ei_data is one byte of e_ident[]			*/
-
 	uint16_t e_machine;		/* Size is Elf32_Half or Elf64_Half.  Both are 2 bytes.	*/
 	uint32_t e_flags;		/* Size is Elf32_Word or Elf64_Word.  Both are 4 bytes.	*/
 	uint64_t e_machine_offset, e_flags_offset;  /* Wide enough for either 32 or 64 bits.	*/
@@ -261,7 +262,7 @@ main(int argc, char* argv[])
 		errx(1, "failed to open %s", argv[1]);
 	if (read(fd, magic, 4) == -1)
 		errx(1, "read() magic failed");
-	if (strncmp(magic, ELFMAG, 4) != 0)
+	if (strncmp(magic, ELFMAG, 4))
 		errx(1, "%s is not an ELF object", argv[1]);
 
 	/* 32 or 64 bits machine word size? */
