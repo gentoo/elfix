@@ -7,24 +7,20 @@
  *
  * Supported identifiers:
  *
- *	alpha_{32,64}
- *	arm_{32,64}
- *	hppa_{32,64}
- *	ia_{32,64}
- *	m68k_{32,64}
+ *	alpha_64
+ *	arm_{oabi,eabi}
+ *	arm_64
+ *	hppa_32
+ *	ia_64
+ *	m68k_32
  *	mips_{n32,n64,o32}
  *	ppc_{32,64}
  *	s390_{32,64}
- *	sh_{32,64}
+ *	sh_32
  *	sparc_{32,64}
  *	x86_{32,x32,64}
  *
  * NOTES:
- *
- * * The ABIs referenced by some of the above *_32 and *_64 identifiers
- *   may be imaginary, but they are listed anyway, since the goal is to
- *   establish a naming convention that is as consistent and uniform as
- *   possible.
  *
  * * The Elf header's e_ident[EI_OSABI] byte is completely ignored,
  *   since OS-independence is one of the goals. The assumption is that,
@@ -85,19 +81,13 @@
 #define EM_IA_64	50		/* Intel Merced */
 #define EM_X86_64	62		/* AMD x86-64 architecture */
 #define EM_AARCH64	183		/* ARM AARCH64 */
-#define EM_ALPHA	0x9026
+#define EM_ALPHA	0x9026		/* Unofficial, but needed in Gentoo */
+#define EM_HPPA		0x0F00		/* Unofficial, but needed in Gentoo */
 
-#define EF_MIPS_ABI2		32
-#define EF_MIPS_ABI_ON32	64
-/*
-E_MIPS_ABI_O32     = 0x00001000
-E_MIPS_ABI_O64     = 0x00002000
-E_MIPS_ABI_EABI32  = 0x00003000
-E_MIPS_ABI_EABI64  = 0x00004000
-*/
+#define EF_MIPS_ABI		0x0000F000
+#define E_MIPS_ABI_O32		0x00001000
 
-#define EF_ARM_NEW_ABI		0x80
-#define EF_ARM_OLD_ABI		0x100
+#define EF_ARM_EABIMASK		0XFF000000
 
 
 int
@@ -117,43 +107,99 @@ get_wordsize(uint8_t ei_class)
 char *
 get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 {
+	/* The following arrives at the abstract ABI name by a process of elimination based on the assumption
+	 * that we are only interested in the ABIs supported in Gentoo.  If a new ABIs is added, you need to
+	 * rethink the logic to avoid false positives/negatives.
+	 */
 	switch(e_machine) {
+
+		/* alpha: We support only one 64-bit ABI. */
 		case EM_ALPHA:
 		case EM_FAKE_ALPHA:
-			return "alpha";
+			return "alpha_64";
+
+		/* amd64 + x86: We support X86-64, X86-X32, and X86-32 ABI. The first
+		 * two are 64-bit ABIs and the third is 32-bit.  All three will run on
+		 * amd64 architecture, but only the 32-bit will run on the x86 family.
+		 */
 		case EM_X86_64:
-			return "amd64";
+			if (width == 64)
+				return "x86_64";
+			else
+				return "x86_x32";
+		case EM_386:
+			return "x86_32";
+
+		/* arm: We support two 32-bit ABIs, eabi and oabi. */
 		case EM_ARM:
-			return "arm";
+			if (e_flags & EF_ARM_EABIMASK)
+				return "arm_eabi";
+			else
+				return "arm_oabi";
+
+		/* arm64: We support only one 64-bit ABI. */
 		case EM_AARCH64:
-			return "arm64";
+			return "arm_64";
+
+		/* m68k: We support only one 32-bit ABI. */
 		case EM_68K:
-			return "m68k";
+			return "m68k_32";
+
+		/* mips: We support o32, n32 and n64.  The first is 32-bits and the
+		 * latter two are 64-bit ABIs.
+		 */
 		case EM_MIPS_RS3_LE:
 		case EM_MIPS:
-			return "mips";
+			if (width == 64)
+				return "mips_n64";
+			else
+				if ((e_flags & EF_MIPS_ABI) == E_MIPS_ABI_O32)
+					return "mips_o32";
+				else
+					return "mips_n32";
+
+		/* ia64: We support only one 64-bit ABI. */
 		case EM_IA_64:
-			return "ia64";
+			return "ia_64";
+
+		/* hppa: We support only one 32-bit ABI. */
 		case EM_PARISC:
-			return "hppa";
+		case EM_HPPA:
+			return "hppa_32";
+
+		/* ppc: We support only one 32-bit ABI. */
 		case EM_PPC:
-			return "ppc";
+			return "ppc_32";
+
+		/* ppc64: We support only one 64-bit ABI. */
 		case EM_PPC64:
-			return "ppc64";
+			return "ppc_64";
+
+		/* s390: We support one 32-bit and one 64-bit ABI. */
 		case EM_S390:
-			return "s390";
+			if (width == 64)
+				return "s390_64";
+			else
+				return "s390_32";
+
+		/* sh: We support only one 32-bit ABI. */
 		case EM_SH:
-			return "sh";
+			return "sh_32";
+
+		/* sparc: We support one 32-bit and one 64-bit ABI. */
 		case EM_SPARC32PLUS:
 		case EM_SPARCV9:
 		case EM_SPARC:
-			return "sparc";
-		case EM_386:
-			return "x86";
+			if (width == 64)
+				return "sparc_64";
+			else
+				return "sparc_32";
+
 		default:
-			return "unknown_arch";
+			return "unknown";
 	}
 }
+
 
 int
 main(int argc, char* argv[])
@@ -218,35 +264,12 @@ main(int argc, char* argv[])
 
 	if (lseek(fd, e_flags_offset, SEEK_SET) == -1)
 		err(1, "lseek() e_flags failed");
-	if (read(fd, &e_flags, 2) == -1)
+	if (read(fd, &e_flags, 4) == -1)
 		err(1, "read() e_flags failed");
 
 	abi = get_abi(e_machine, width, e_flags);
-
 	printf("%s\n", abi);
 
-
-/*
-	if (!strcmp(arch, "mips")) ;
-		switch (e_flags & EF_MIPS_ABI) {
-			case E_MIPS_ABI_O32:
-				abi = "o32";
-				break;
-
-		if mips_abi == E_MIPS_ABI_O32:
-			name = "o32"
-		elif mips_abi == E_MIPS_ABI_O64:
-			name = "o64"
-		elif mips_abi == E_MIPS_ABI_EABI32:
-			name = "eabi32"
-		elif mips_abi == E_MIPS_ABI_EABI64:
-			name = "eabi64"
-	elif elf_header.e_flags & EF_MIPS_ABI2:
-		name = "n32"
-	elif elf_header.ei_class == ELFCLASS64:
-		name = "n64"
-		}
-*/
 	close(fd);
 	exit(EXIT_SUCCESS);
 }
