@@ -211,22 +211,23 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 /* Elf object on a big endian (eg. if you are cross compiling), then you get the wrong	*/
 /* byte order.  If howerver, you read it natively, you get it right.  We'll wrap read()	*/
 /* with our own version which reads one byte at a time and corrects this.		*/
-ssize_t
-read_endian(int fd, void *buf, size_t count, int endian)
+uint64_t
+read_endian(int fd, size_t count, int endian)
 {
 	ssize_t i;
 	uint8_t data;
+	uint64_t value = 0;
 
 	for(i = 0; i < count; i++) {
 		if (read(fd, &data, 1) == -1)
 			errx(1, "read() ei_class failed");
 		if (endian)
-			((uint8_t *)buf)[count-i-1] = data;
+			value += data << 8 * (count-i-1);
 		else
-			((uint8_t *)buf)[i] = data;
+			value += data << 8 * i;
 	}
 
-	return count;
+	return value;
 }
 
 
@@ -296,11 +297,11 @@ main(int argc, char* argv[])
 	/* What is the abi? */
 	if (lseek(fd, e_machine_offset, SEEK_SET) == -1)
 		errx(1, "lseek() e_machine failed");
-	read_endian(fd, &e_machine, 2, endian);
+	e_machine = (uint16_t)read_endian(fd, 2, endian);
 
 	if (lseek(fd, e_flags_offset, SEEK_SET) == -1)
 		errx(1, "lseek() e_flags failed");
-	read_endian(fd, &e_flags, 4, endian);
+	e_flags = (uint32_t)read_endian(fd, 4, endian);
 
 	abi = get_abi(e_machine, width, e_flags);
 	printf("%s\n", abi);
