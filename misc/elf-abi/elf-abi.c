@@ -58,38 +58,61 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* We reorder the big endian EM_ numbers to avoid also reading endian information from
- * the Elf file.  For a mapping between common macine names and EM_ see <elf.h>.  For a
- * more complete mapping, see elfutil's machines[] defined in libebl/eblopenbackend.c.
+/* For a mapping between common macine names and EM_ number see <elf.h>.  For a more
+ * complete mapping, see elfutil's machines[] defined in libebl/eblopenbackend.c.
  */
 #define	ELFMAG		"\177ELF"
 
 #define ELFCLASS32	1		/* 32-bit objects */
 #define ELFCLASS64	2		/* 64-bit objects */
+#define ELFDATA2LSB	1		/* 2's complement, little endian */
+#define ELFDATA2MSB	2		/* 2's complement, big endian */
 
 #define EM_ALPHA	0x9026		/* alpha */
 #define EM_ARM		40		/* arm */
 #define EM_AARCH64	183		/* arm64 */
-#define EM_PARISC_BE	0x0F00		/* hppa - big endian reordering of EM_PARISC = 15 */
+#define EM_PARISC	15		/* hppa */
 #define EM_IA_64	50		/* ia64 */
-#define EM_68K_BE	0x0400		/* m68k - big endian reordering of EM_68K = 4 */
-
+#define EM_68K		4		/* m68k */
 #define EM_MIPS		8		/* mips */
-#define EM_MIPS_BE	0x800		/* mips - big endian reordering of EM_MIPS = 8 */
-
-#define EM_PPC_BE	0x1400		/* ppc - big endian reordering of EM_PPC = 20 */
-#define EM_PPC64_BE	0x1500		/* ppc64 - bit endian reordering of EM_PPC64 = 21 */
-#define EM_S390_BE	0x1600		/* s390 - big endian reordering of EM_S390 */
+#define EM_PPC		20		/* ppc */
+#define EM_PPC64	21		/* ppc64 */
+#define EM_S390		22		/* s390 */
 #define EM_SH		42		/* Hitachi SH */
-#define EM_SPARC32_BE	0x1200		/* sparc - big endian reordering of EM_SPARC32PLUS = 18 */
-#define EM_SPARC64_BE	0x2B00		/* sparc - big endian reordinger of EM_SPARCV9 = 43 */
+#define EM_SPARC32PLUS	18		/* sparc 32-bit */
+#define EM_SPARCV9	43		/* sparc 64-bit */
 #define EM_386		3		/* x86 */
 #define EM_X86_64	62		/* amd64 */
 
 /* The arm and mips ABI flags housed in e_flags */
-#define EF_MIPS_ABI2		0x00000020	/* Mask for mips ABI */
-#define EF_MIPS_ABI2_BE		0x20000000	/* Mask for mips ABI */
+#define EF_MIPS_ABI2		0x00000020	/* Mask for mips n32 ABI */
 #define EF_ARM_EABIMASK		0XFF000000	/* Mask for arm EABI - we dont' destinguish versions */
+
+int
+get_wordsize(uint8_t ei_class)
+{
+	switch (ei_class) {
+		case ELFCLASS32:
+			return 32;
+		case ELFCLASS64:
+			return 64;
+		default:
+			errx(1, "Unknown machine word size.");
+	}
+}
+
+int
+get_endian(uint8_t ei_data)
+{
+	switch (ei_data) {
+		case ELFDATA2LSB:
+			return 0;
+		case ELFDATA2MSB:
+			return 1;
+		default:
+			errx(1, "Unknown endian.");
+	}
+}
 
 
 char *
@@ -117,7 +140,7 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 			return "arm_64";
 
 		/* m68k: We support only one 32-bit ABI. */
-		case EM_68K_BE:
+		case EM_68K:
 			return "m68k_32";
 
 		/* mips: We support o32, n32 and n64.  The first is 32-bits and the
@@ -132,33 +155,25 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 				else
 					return "mips_o32";
 
-		case EM_MIPS_BE:
-			if (width == 64)
-				return "mips_n64";
-			else
-				if (e_flags & EF_MIPS_ABI2_BE)
-					return "mips_n32";
-				else
-					return "mips_o32";
 
 		/* ia64: We support only one 64-bit ABI. */
 		case EM_IA_64:
 			return "ia_64";
 
 		/* hppa: We support only one 32-bit ABI. */
-		case EM_PARISC_BE:
+		case EM_PARISC:
 			return "hppa_32";
 
 		/* ppc: We support only one 32-bit ABI. */
-		case EM_PPC_BE:
+		case EM_PPC:
 			return "ppc_32";
 
 		/* ppc64: We support only one 64-bit ABI. */
-		case EM_PPC64_BE:
+		case EM_PPC64:
 			return "ppc_64";
 
 		/* s390: We support one 32-bit and one 64-bit ABI. */
-		case EM_S390_BE:
+		case EM_S390:
 			if (width == 64)
 				return "s390_64";
 			else
@@ -169,9 +184,9 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 			return "sh_32";
 
 		/* sparc: We support one 32-bit and one 64-bit ABI. */
-		case EM_SPARC32_BE:
+		case EM_SPARC32PLUS:
 			return "sparc_32";
-		case EM_SPARC64_BE:
+		case EM_SPARCV9:
 			return "sparc_64";
 
 		/* amd64 + x86: We support X86-64, X86-X32, and X86-32 ABI. The first
@@ -192,16 +207,42 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 }
 
 
+/* Sublte point about read():  If you run elf-abi from a little endian machine on an	*/
+/* Elf object on a big endian (eg. if you are cross compiling), then you get the wrong	*/
+/* byte order.  If howerver, you read it natively, you get it right.  We'll wrap read()	*/
+/* with our own version which reads one byte at a time and corrects this.		*/
+ssize_t
+read_endian(int fd, void *buf, size_t count, int endian)
+{
+	ssize_t i;
+	uint8_t data;
+
+	for(i = 0; i < count; i++) {
+		if (read(fd, &data, 1) == -1)
+			errx(1, "read() ei_class failed");
+		if (endian)
+			((uint8_t *)buf)[count-i-1] = data;
+		else
+			((uint8_t *)buf)[i] = data;
+	}
+
+	return count;
+}
+
+
 int
 main(int argc, char* argv[])
 {
 	int width;			/* Machine word size.  Either 32 or 64 bits.		*/
+	int endian;			/* Endian, 0 = little, 1 = big				*/
 	char *abi;			/* Abi name from glibc's <bits/syscall.h>		*/
 
 	int fd;				/* file descriptor for opened Elf object.		*/
 	struct stat s;			/* stat on opened Elf object.				*/
 	char magic[4];			/* magic number at the begining of the file		*/
 	uint8_t ei_class;		/* ei_class is one byte of e_ident[]			*/
+	uint8_t ei_data;		/* ei_data is one byte of e_ident[]			*/
+
 	uint16_t e_machine;		/* Size is Elf32_Half or Elf64_Half.  Both are 2 bytes.	*/
 	uint32_t e_flags;		/* Size is Elf32_Word or Elf64_Word.  Both are 4 bytes.	*/
 	uint64_t e_machine_offset, e_flags_offset;  /* Wide enough for either 32 or 64 bits.	*/
@@ -216,25 +257,21 @@ main(int argc, char* argv[])
 
 	/* Can we read it and is it an ELF object? */
 	if ((fd = open(argv[1], O_RDONLY)) == -1)
-		err(1, "failed to open %s", argv[1]);
+		errx(1, "failed to open %s", argv[1]);
 	if (read(fd, magic, 4) == -1)
-		err(1, "read() magic failed");
+		errx(1, "read() magic failed");
 	if (strncmp(magic, ELFMAG, 4) != 0)
 		errx(1, "%s is not an ELF object", argv[1]);
 
 	/* 32 or 64 bits machine word size? */
 	if (read(fd, &ei_class, 1) == -1)
-		err(1, "read() ei_class failed");
-	switch (ei_class) {
-		case ELFCLASS32:
-			width = 32;
-			break;
-		case ELFCLASS64:
-			width = 64;
-			break;
-		default:
-			errx(1, "Unknown machine word size.");
-	}
+		errx(1, "read() ei_class failed");
+	width = get_wordsize(ei_class);
+
+	/* Little or Big Endian? */
+	if (read(fd, &ei_data, 1) == -1)
+		errx(1, "read() ei_data failed");
+	endian = get_endian(ei_data);
 
 	/*
 	All Elf files begin with the following Elf header:
@@ -258,14 +295,12 @@ main(int argc, char* argv[])
 
 	/* What is the abi? */
 	if (lseek(fd, e_machine_offset, SEEK_SET) == -1)
-		err(1, "lseek() e_machine failed");
-	if (read(fd, &e_machine, 2) == -1)
-		err(1, "read() e_machine failed");
+		errx(1, "lseek() e_machine failed");
+	read_endian(fd, &e_machine, 2, endian);
 
 	if (lseek(fd, e_flags_offset, SEEK_SET) == -1)
-		err(1, "lseek() e_flags failed");
-	if (read(fd, &e_flags, 4) == -1)
-		err(1, "read() e_flags failed");
+		errx(1, "lseek() e_flags failed");
+	read_endian(fd, &e_flags, 4, endian);
 
 	abi = get_abi(e_machine, width, e_flags);
 	printf("%s\n", abi);
