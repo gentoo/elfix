@@ -58,50 +58,38 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* We steal this from <elf.h> but don't include it so as to not increase our dependancies. */
+/* We reorder the big endian EM_ numbers to avoid also reading endian information from
+ * the Elf file.  For a mapping between common macine names and EM_ see <elf.h>.  For a
+ * more complete mapping, see elfutil's machines[] defined in libebl/eblopenbackend.c.
+ */
 #define	ELFMAG		"\177ELF"
 
 #define ELFCLASS32	1		/* 32-bit objects */
 #define ELFCLASS64	2		/* 64-bit objects */
 
-#define EM_SPARC	 2		/* SUN SPARC */
-#define EM_386		 3		/* Intel 80386 */
-#define EM_68K		 4		/* Motorola m68k family */
+#define EM_ALPHA	0x9026		/* alpha */
+#define EM_ARM		40		/* arm */
+#define EM_AARCH64	183		/* arm64 */
+#define EM_PARISC_BE	0x0F00		/* hppa - big endian reordering of EM_PARISC = 15 */
+#define EM_IA_64	50		/* ia64 */
+#define EM_68K_BE	0x0400		/* m68k - big endian reordering of EM_68K = 4 */
+
 #define EM_MIPS		 8		/* MIPS R3000 big-endian */
 #define EM_MIPS_RS3_LE	10		/* MIPS R3000 little-endian */
-#define EM_PARISC	15		/* HPPA */
-#define EM_SPARC32PLUS	18		/* Sun's "v8plus" */
-#define EM_PPC		20		/* PowerPC */
-#define EM_PPC64	21		/* PowerPC 64-bit */
-#define EM_S390		22		/* IBM S390 */
-#define EM_ARM		40		/* ARM */
-#define EM_FAKE_ALPHA	41		/* Digital Alpha */
+
+#define EM_PPC_BE	0x1400		/* ppc - big endian reordering of EM_PPC = 20 */
+#define EM_PPC64_BE	0x1500		/* ppc64 - bit endian reordering of EM_PPC64 = 21 */
+#define EM_S390_BE	0x1600		/* s390 - big endian reordering of EM_S390 */
 #define EM_SH		42		/* Hitachi SH */
-#define EM_SPARCV9	43		/* SPARC v9 64-bit */
-#define EM_IA_64	50		/* Intel Merced */
-#define EM_X86_64	62		/* AMD x86-64 architecture */
-#define EM_AARCH64	183		/* ARM AARCH64 */
-#define EM_ALPHA	0x9026		/* Unofficial, but needed in Gentoo */
-#define EM_HPPA		0x0F00		/* Unofficial, but needed in Gentoo */
+#define EM_SPARC32_BE	0x1200		/* sparc - big endian reordering of EM_SPARC32PLUS = 18 */
+#define EM_SPARC64_BE	0x2B00		/* sparc - big endian reordinger of EM_SPARCV9 = 43 */
+#define EM_386		 3		/* x86 */
+#define EM_X86_64	62		/* amd64 */
 
-#define EF_MIPS_ABI		0x0000F000
-#define E_MIPS_ABI_O32		0x00001000
-
-#define EF_ARM_EABIMASK		0XFF000000
-
-
-int
-get_wordsize(uint8_t ei_class)
-{
-	switch (ei_class) {
-		case ELFCLASS32:
-			return 32;
-		case ELFCLASS64:
-			return 64;
-		default:
-			return 0;
-	}
-}
+/* The arm and mips ABI flags housed in e_flags */
+#define EF_MIPS_ABI		0x0000F000	/* Mask for mips ABI */
+#define E_MIPS_ABI_O32		0x00001000	/* Value for o32                */
+#define EF_ARM_EABIMASK		0XFF000000	/* Mask for arm EABI - we dont' destinguish versions */
 
 
 char *
@@ -115,20 +103,7 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 
 		/* alpha: We support only one 64-bit ABI. */
 		case EM_ALPHA:
-		case EM_FAKE_ALPHA:
 			return "alpha_64";
-
-		/* amd64 + x86: We support X86-64, X86-X32, and X86-32 ABI. The first
-		 * two are 64-bit ABIs and the third is 32-bit.  All three will run on
-		 * amd64 architecture, but only the 32-bit will run on the x86 family.
-		 */
-		case EM_X86_64:
-			if (width == 64)
-				return "x86_64";
-			else
-				return "x86_x32";
-		case EM_386:
-			return "x86_32";
 
 		/* arm: We support two 32-bit ABIs, eabi and oabi. */
 		case EM_ARM:
@@ -142,7 +117,7 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 			return "arm_64";
 
 		/* m68k: We support only one 32-bit ABI. */
-		case EM_68K:
+		case EM_68K_BE:
 			return "m68k_32";
 
 		/* mips: We support o32, n32 and n64.  The first is 32-bits and the
@@ -163,20 +138,19 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 			return "ia_64";
 
 		/* hppa: We support only one 32-bit ABI. */
-		case EM_PARISC:
-		case EM_HPPA:
+		case EM_PARISC_BE:
 			return "hppa_32";
 
 		/* ppc: We support only one 32-bit ABI. */
-		case EM_PPC:
+		case EM_PPC_BE:
 			return "ppc_32";
 
 		/* ppc64: We support only one 64-bit ABI. */
-		case EM_PPC64:
+		case EM_PPC64_BE:
 			return "ppc_64";
 
 		/* s390: We support one 32-bit and one 64-bit ABI. */
-		case EM_S390:
+		case EM_S390_BE:
 			if (width == 64)
 				return "s390_64";
 			else
@@ -187,13 +161,22 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 			return "sh_32";
 
 		/* sparc: We support one 32-bit and one 64-bit ABI. */
-		case EM_SPARC32PLUS:
-		case EM_SPARCV9:
-		case EM_SPARC:
+		case EM_SPARC32_BE:
+			return "sparc_32";
+		case EM_SPARC64_BE:
+			return "sparc_64";
+
+		/* amd64 + x86: We support X86-64, X86-X32, and X86-32 ABI. The first
+		 * two are 64-bit ABIs and the third is 32-bit.  All three will run on
+		 * amd64 architecture, but only the 32-bit will run on the x86 family.
+		 */
+		case EM_386:
+			return "x86_32";
+		case EM_X86_64:
 			if (width == 64)
-				return "sparc_64";
+				return "x86_64";
 			else
-				return "sparc_32";
+				return "x86_x32";
 
 		default:
 			return "unknown";
@@ -231,10 +214,19 @@ main(int argc, char* argv[])
 	if (strncmp(magic, ELFMAG, 4) != 0)
 		errx(1, "%s is not an ELF object", argv[1]);
 
-	/* 32 or 64 bits? */
+	/* 32 or 64 bits machine word size? */
 	if (read(fd, &ei_class, 1) == -1)
 		err(1, "read() ei_class failed");
-	width = get_wordsize(ei_class);
+	switch (ei_class) {
+		case ELFCLASS32:
+			width = 32;
+			break;
+		case ELFCLASS64:
+			width = 64;
+			break;
+		default:
+			errx(1, "Unknown machine word size.");
+	}
 
 	/*
 	All Elf files begin with the following Elf header:
@@ -261,6 +253,8 @@ main(int argc, char* argv[])
 		err(1, "lseek() e_machine failed");
 	if (read(fd, &e_machine, 2) == -1)
 		err(1, "read() e_machine failed");
+	printf("%x\n", e_machine);
+	printf("%d\n", e_machine);
 
 	if (lseek(fd, e_flags_offset, SEEK_SET) == -1)
 		err(1, "lseek() e_flags failed");
