@@ -74,8 +74,8 @@
 #define EM_IA_64	50		/* ia64 */
 #define EM_68K_BE	0x0400		/* m68k - big endian reordering of EM_68K = 4 */
 
-#define EM_MIPS		 8		/* MIPS R3000 big-endian */
-#define EM_MIPS_RS3_LE	10		/* MIPS R3000 little-endian */
+#define EM_MIPS		8		/* mips */
+#define EM_MIPS_BE	0x800		/* mips - big endian reordering of EM_MIPS = 8 */
 
 #define EM_PPC_BE	0x1400		/* ppc - big endian reordering of EM_PPC = 20 */
 #define EM_PPC64_BE	0x1500		/* ppc64 - bit endian reordering of EM_PPC64 = 21 */
@@ -83,12 +83,12 @@
 #define EM_SH		42		/* Hitachi SH */
 #define EM_SPARC32_BE	0x1200		/* sparc - big endian reordering of EM_SPARC32PLUS = 18 */
 #define EM_SPARC64_BE	0x2B00		/* sparc - big endian reordinger of EM_SPARCV9 = 43 */
-#define EM_386		 3		/* x86 */
+#define EM_386		3		/* x86 */
 #define EM_X86_64	62		/* amd64 */
 
 /* The arm and mips ABI flags housed in e_flags */
-#define EF_MIPS_ABI		0x0000F000	/* Mask for mips ABI */
-#define E_MIPS_ABI_O32		0x00001000	/* Value for o32                */
+#define EF_MIPS_ABI2		0x00000020	/* Mask for mips ABI */
+#define EF_MIPS_ABI2_BE		0x20000000	/* Mask for mips ABI */
 #define EF_ARM_EABIMASK		0XFF000000	/* Mask for arm EABI - we dont' destinguish versions */
 
 
@@ -123,15 +123,23 @@ get_abi(uint16_t e_machine, int width, uint32_t e_flags)
 		/* mips: We support o32, n32 and n64.  The first is 32-bits and the
 		 * latter two are 64-bit ABIs.
 		 */
-		case EM_MIPS_RS3_LE:
 		case EM_MIPS:
 			if (width == 64)
 				return "mips_n64";
 			else
-				if ((e_flags & EF_MIPS_ABI) == E_MIPS_ABI_O32)
-					return "mips_o32";
-				else
+				if (e_flags & EF_MIPS_ABI2)
 					return "mips_n32";
+				else
+					return "mips_o32";
+
+		case EM_MIPS_BE:
+			if (width == 64)
+				return "mips_n64";
+			else
+				if (e_flags & EF_MIPS_ABI2_BE)
+					return "mips_n32";
+				else
+					return "mips_o32";
 
 		/* ia64: We support only one 64-bit ABI. */
 		case EM_IA_64:
@@ -253,8 +261,6 @@ main(int argc, char* argv[])
 		err(1, "lseek() e_machine failed");
 	if (read(fd, &e_machine, 2) == -1)
 		err(1, "read() e_machine failed");
-	printf("%x\n", e_machine);
-	printf("%d\n", e_machine);
 
 	if (lseek(fd, e_flags_offset, SEEK_SET) == -1)
 		err(1, "lseek() e_flags failed");
