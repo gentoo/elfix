@@ -34,8 +34,6 @@ revdepbin
 #
 scripts/build
 #
-misc/fix-gnustack/fix-gnustack
-#
 poc/change-interp/change-interp
 poc/elf-manipulate/clear-dt-path
 poc/elf-manipulate/parse-elf
