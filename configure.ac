@@ -16,7 +16,7 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_PREREQ([2.65])
+AC_PREREQ([2.68])
 AC_INIT([elfix], [0.9], [http://bugs.gentoo.org/])
 AC_CONFIG_SRCDIR([src/paxctl-ng.c])
 AC_CONFIG_HEADERS([config.h])
