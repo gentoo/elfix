@@ -17,6 +17,7 @@ Directories under misc/ are independant packages from one another and from the
 elfix package.  They are NOT distributed with elfix when running `make dist` in
 the top directory.  Each directory supplies its own build system.
     * install-xattr - C wrapper to coreutils' install which preserves file system extended attributes.
+    * fix-gnustack - query or clear any ELF GNU_STACK executable flag
 
 Directory pocs/ - Very experimental stuff.
     * change-interp - C utility to the dynamic linker, INTERP as reported by `readelf -l`.
@@ -33,3 +34,6 @@ Directory pocs/ - Very experimental stuff.
     * revdep-pax-ng - same as revdep-pax but using information obtained from `ldd` and
       not VDB information.
 
+
+## Repoman status
+[![Repoman Status](https://travis-ci.org/gentoo/elfix.png)](https://travis-ci.org/gentoo/elfix)
