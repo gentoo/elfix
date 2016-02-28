@@ -4,7 +4,7 @@ compiler:
   - clang
 before_install:
  - sudo apt-get update -qq
- - sudo apt-get install autotools-dev automake autoconf libtool libelf-dev
+ - sudo apt-get install libattr1-dev autotools-dev automake autoconf libelf-dev libtool
 script:
  - ./autogen.sh
  - ./configure
