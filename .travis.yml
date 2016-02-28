@@ -5,9 +5,10 @@ compiler:
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install autotools-dev automake autoconf libtool
-script: ./autogen.sh && ./configure && make V=1 distcheck && \
-        cd misc/fix-gnustack && ./autogen.sh && ./configure && make V=1 distcheck && \
-        cd ../install-xattr && make V=1
+script: 
+ - ./autogen.sh && ./configure && make V=1 distcheck
+ - cd misc/fix-gnustack && ./autogen.sh && ./configure && make V=1 distcheck
+ - cd ../install-xattr && make V=1
 notifications:
   irc:
     channels:
