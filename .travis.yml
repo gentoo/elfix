@@ -12,7 +12,7 @@ script:
  - cd misc/fix-gnustack
  - ./autogen.sh
  - ./configure
- - make V=1 distcheck
+ - make V=1 dist
  - cd ../install-xattr
  - make V=1
 notifications:
