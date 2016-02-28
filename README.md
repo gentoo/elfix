@@ -35,5 +35,5 @@ Directory pocs/ - Very experimental stuff.
       not VDB information.
 
 
-## Repoman status
+## Build Status
 [![Repoman Status](https://travis-ci.org/gentoo/elfix.png)](https://travis-ci.org/gentoo/elfix)
