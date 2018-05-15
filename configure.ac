@@ -114,9 +114,9 @@ AS_IF(
     [test "x$enable_xtpax" != "xno"],
     [
         AC_CHECK_HEADERS(
-            [attr/xattr.h],
+            [sys/xattr.h],
             [],
-            [AC_MSG_ERROR(["Missing necessary attr/xattr.h"])]
+            [AC_MSG_ERROR(["Missing necessary sys/xattr.h"])]
         )
         AC_CHECK_LIB(
             [attr],

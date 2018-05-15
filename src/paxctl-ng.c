@@ -49,7 +49,10 @@
 #endif
 
 #ifdef XTPAX
- #include <attr/xattr.h>
+ #include <sys/xattr.h>
+ #ifndef ENOATTR
+  #define ENOATTR ENODATA
+ #endif
  #define PAX_NAMESPACE	"user.pax.flags"
  #define CREATE_XT_FLAGS_SECURE         1
  #define CREATE_XT_FLAGS_DEFAULT        2

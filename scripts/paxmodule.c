@@ -45,7 +45,7 @@
 #endif
 
 #ifdef XTPAX
- #include <attr/xattr.h>
+ #include <sys/xattr.h>
  #define PAX_NAMESPACE	"user.pax.flags"
 #endif
 
