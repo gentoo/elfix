@@ -805,6 +805,13 @@ main( int argc, char *argv[])
 
 		if((fd = open(argv[fi], O_RDWR)) < 0)
 		{
+			if(errno == ENOENT) {
+				if(verbose)
+					printf("\topen() failed: file does not exist\n\n");
+				ret |= ENOENT;
+				continue;
+			}
+
 			rdwr_pt_pax = 0;
 #ifdef PTPAX
 			if(verbose)
