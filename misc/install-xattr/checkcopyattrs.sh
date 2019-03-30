@@ -49,6 +49,9 @@ setfattr -n user.pax.flags -v "r" c
 [ "$(getfattr --only-values -n user.bas f/a)" == "x" ]
 [ "$(getfattr --only-values -n user.pax.flags f/a)" == "mr" ]
 
+# Check that we can copy large files
+truncate -s2G a
+./install-xattr a x
 
 # The following are just tests to make sure the raw install
 # options don't get lost in our optargs parsing.

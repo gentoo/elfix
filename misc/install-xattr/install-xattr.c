@@ -365,8 +365,10 @@ main(int argc, char* argv[])
 
 			if (!opts_target_directory) {
 				target = argv[last];
-				if (stat(target, &s) != 0)
+				if (stat(target, &s) != 0) {
+					err(1, "failed to stat %s", target);
 					return EXIT_FAILURE;
+				}
 				target_is_directory = S_ISDIR(s.st_mode);
 			} else {
 				/* target was set above with the -t option */
@@ -381,8 +383,10 @@ main(int argc, char* argv[])
 					last++;
 
 				for (i = first; i < last; i++) {
-					if (stat(argv[i], &s) != 0)
+					if (stat(argv[i], &s) != 0) {
+						err(1, "failed to stat %s", argv[i]);
 						return EXIT_FAILURE;
+					}
 					/* We reproduce install's behavior and skip
 					 * all extra directories on the command line
 					 * that are not the final target directory.
