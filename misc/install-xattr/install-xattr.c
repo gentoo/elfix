@@ -239,7 +239,7 @@ main(int argc, char* argv[])
 	int target_is_directory = 0;   /* is the target a directory?                                   */
 
 	int first, last;               /* argv indices of the first file/directory and last            */
-	char *target;                  /* the target file or directory                                 */
+	char *target = NULL;           /* the target file or directory                                 */
 	char *path;                    /* path to the target file                                      */
 
 	char *mypath = realpath("/proc/self/exe", NULL); /* path to argv[0]                            */
@@ -331,7 +331,8 @@ main(int argc, char* argv[])
 	char *portage_helper_path = getenv("__PORTAGE_HELPER_PATH");
 	char *portage_helper_canpath = NULL;
 	if (portage_helper_path)
-		chdir(oldpwd);
+		if (chdir(oldpwd) != 0)
+			err(1, "failed to chdir %s", oldpwd);
 
 	switch (fork()) {
 		case -1:
