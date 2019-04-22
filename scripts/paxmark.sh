@@ -96,5 +96,5 @@ elif [[ -e $MAKE_CONF ]]; then
 	source $MAKE_CONF
 fi
 
-PAX_MARKINGS=${PAX_MARKINGS:="PT XT"}
+PAX_MARKINGS=${PAX_MARKINGS:="none"}
 paxmarksh "$@"
