@@ -285,7 +285,7 @@ main(int argc, char* argv[])
 		};
 
 		int option_index;
-		int c = getopt_long(argc, argv, "dt:g:m:o:S:Z:", long_options, &option_index);
+		int c = getopt_long(argc, argv, "dt:g:m:o:S:Zb", long_options, &option_index);
 
  
 		if (c == -1)
