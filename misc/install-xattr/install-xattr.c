@@ -234,6 +234,8 @@ main(int argc, char* argv[])
 	int i;
 	int status;                    /* exit status of child "install" process                       */
 
+	char** argv_copy;              /* copy argv to avoid mangling by getopt_long()                 */
+
 	int opts_directory = 0;        /* if -d was given, then all arguments are directories          */
 	int opts_target_directory = 0; /* if -t was given, then we're installing to a target directory */
 	int target_is_directory = 0;   /* is the target a directory?                                   */
@@ -270,23 +272,32 @@ main(int argc, char* argv[])
 
 	opterr = 0; /* we skip many legitimate flags, so silence any warning */
 
+	static struct option long_options[] = {
+		{           "directory",       no_argument, 0, 'd'},
+		{    "target-directory", required_argument, 0, 't'},
+		{               "group", required_argument, 0, 'g'},
+		{                "mode", required_argument, 0, 'm'},
+		{               "owner", required_argument, 0, 'o'},
+		{              "suffix", required_argument, 0, 'S'},
+		{             "context", optional_argument, 0, 'Z'},
+		{              "backup", optional_argument, 0, 'b'},
+		{                "help",       no_argument, 0,  0 },
+		{                     0,                 0, 0,  0 }
+	};
+
+	/* We copy argv[] because getopts_long() mangles the order of the arguments.
+	 * We pass the original argv[] to install in the fork() while we use
+	 * argv_copy[] for the copying of the xattrs since optind assumes a reorder
+	 * parameter list.
+	 */
+	argv_copy = (char **)malloc(argc*sizeof(char *));
+
+	for (i = 0; i < argc; i++)
+		argv_copy[i] = strdup(argv[i]);
+
 	while (1) {
-		static struct option long_options[] = {
-			{           "directory",       no_argument, 0, 'd'},
-			{    "target-directory", required_argument, 0, 't'},
-			{               "group", required_argument, 0, 'g'},
-			{                "mode", required_argument, 0, 'm'},
-			{               "owner", required_argument, 0, 'o'},
-			{              "suffix", required_argument, 0, 'S'},
-			{             "context", optional_argument, 0, 'Z'},
-			{              "backup", optional_argument, 0, 'b'},
-			{                "help",       no_argument, 0,  0 },
-			{                     0,                 0, 0,  0 }
-		};
-
 		int option_index;
-		int c = getopt_long(argc, argv, "dt:g:m:o:S:Zb", long_options, &option_index);
-
+		int c = getopt_long(argc, argv_copy, "dt:g:m:o:S:Zb", long_options, &option_index);
  
 		if (c == -1)
 			break;
@@ -365,7 +376,7 @@ main(int argc, char* argv[])
 				goto done;
 
 			if (!opts_target_directory) {
-				target = argv[last];
+				target = argv_copy[last];
 				if (stat(target, &s) != 0) {
 					err(1, "failed to stat %s", target);
 					return EXIT_FAILURE;
@@ -384,8 +395,8 @@ main(int argc, char* argv[])
 					last++;
 
 				for (i = first; i < last; i++) {
-					if (stat(argv[i], &s) != 0) {
-						err(1, "failed to stat %s", argv[i]);
+					if (stat(argv_copy[i], &s) != 0) {
+						err(1, "failed to stat %s", argv_copy[i]);
 						return EXIT_FAILURE;
 					}
 					/* We reproduce install's behavior and skip
@@ -395,12 +406,12 @@ main(int argc, char* argv[])
 					if (S_ISDIR(s.st_mode))
 						continue;
 
-					path = path_join(target, basename(argv[i]));
-					copyxattr(argv[i], path);
+					path = path_join(target, basename(argv_copy[i]));
+					copyxattr(argv_copy[i], path);
 					free(path);
 				}
 			} else
-				copyxattr(argv[first], target);
+				copyxattr(argv_copy[first], target);
 
 
  done:
