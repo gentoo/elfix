@@ -86,15 +86,21 @@ paxmarksh() {
 	return ${ret}
 }
 
-MAKE_CONF="/etc/portage/make.conf"
-
-if [[ -d $MAKE_CONF ]]; then
-	for MC in $MAKE_CONF/*; do
-		source $MC
-	done
-elif [[ -e $MAKE_CONF ]]; then
-	source $MAKE_CONF
+if command -v portageq >/dev/null; then
+	PAX_MARKINGS="$(portageq envvar PAX_MARKINGS)"
 fi
 
-PAX_MARKINGS=${PAX_MARKINGS:="none"}
+if [[ -z ${PAX_MARKINGS} ]]; then
+	MAKE_CONF="/etc/portage/make.conf"
+
+	if [[ -d ${MAKE_CONF} ]]; then
+		for MC in "${MAKE_CONF}"/*; do
+			source "${MC}"
+		done
+	elif [[ -r ${MAKE_CONF} ]]; then
+		source "${MAKE_CONF}"
+	fi
+fi
+
+: "${PAX_MARKINGS:="none"}"
 paxmarksh "$@"
