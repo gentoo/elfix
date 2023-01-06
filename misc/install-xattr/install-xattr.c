@@ -119,6 +119,10 @@ copyxattr(const char *source, const char *target)
 	lxattr = xmalloc(lsize);
 	xlistxattr(source, lxattr, lsize);
 
+	/* There's no xattrs at all. */
+	if (lsize == 0)
+		return;
+
 	i = 0;
 	while (1) {
 		while (lxattr[i++] == 0)
