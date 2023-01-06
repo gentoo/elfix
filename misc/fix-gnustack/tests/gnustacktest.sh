@@ -16,6 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+set -x
 
 before=$(../fix-gnustack -f bad-gnustack)
 before=$(echo ${before} | awk '{ print $2 }')
