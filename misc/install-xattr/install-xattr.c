@@ -248,7 +248,6 @@ main(int argc, char* argv[])
 	char *target = NULL;           /* the target file or directory                                 */
 	char *path;                    /* path to the target file                                      */
 
-	char *mypath = realpath("/proc/self/exe", NULL); /* path to argv[0]                            */
 	char *install;                                   /* path to the system install                 */
 
 	struct stat s;                 /* test if a file is a regular file or a directory              */
@@ -353,7 +352,9 @@ main(int argc, char* argv[])
 		case -1:
 			err(1, "fork() failed");
 
-		case 0:
+		case 0: {
+			char *mypath = realpath("/proc/self/exe", NULL); /* path to argv[0] */
+
 			/* find system install avoiding mypath and portage_helper_path! */
 			if (portage_helper_path)
 				portage_helper_canpath = realpath(portage_helper_path, NULL);
@@ -363,6 +364,7 @@ main(int argc, char* argv[])
 			argv[0] = install;        /* so coreutils' lib/program.c behaves  */
 			execv(install, argv);     /* The kernel will free(install).       */
 			err(1, "execv() failed");
+		}
 
 		default:
 			wait(&status);
