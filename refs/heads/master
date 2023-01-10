@@ -1,0 +1,15 @@
+certificate version 0.1
+pusher Sam James <sam@gentoo.org> 1673328101 +0000
+pushee git+ssh://git.gentoo.org/proj/elfix.git
+nonce 1673328101-fa97b20f5a3a4b6f10f37d82b2c4a201b01b19a5
+
+6adf2b864fdbcb9cd57d427e6e411e6f09f83ef2 af4026c31eb079618f67a62b2f59faae31850e5b refs/heads/master
+-----BEGIN PGP SIGNATURE-----
+
+iOUEABYKAI0WIQQlpruI3Zt2TGtVQcJzhAn1IN+RkAUCY7z15V8UgAAAAAAuAChp
+c3N1ZXItZnByQG5vdGF0aW9ucy5vcGVucGdwLmZpZnRoaG9yc2VtYW4ubmV0MjVB
+NkJCODhERDlCNzY0QzZCNTU0MUMyNzM4NDA5RjUyMERGOTE5MA8cc2FtQGdlbnRv
+by5vcmcACgkQc4QJ9SDfkZDQCgD/Vhz2yEDR5PoJr+MxnO3UL1krpYG7hGlzcNra
+cABH7jMBANY+9rlQ6Cu8fLa22NmxhSYFv/3+M5oT35jBrRb0vKID
+=DspW
+-----END PGP SIGNATURE-----
