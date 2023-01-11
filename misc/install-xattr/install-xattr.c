@@ -1,7 +1,7 @@
-/* Copyright 2014 Gentoo Foundation
+/* Copyright 2014-2023 Gentoo Foundation
  * Distributed under the terms of the GNU General Public License v2
  *
- * Wrapper for coreutil's install to preserve extended attributes.
+ * Wrapper for coreutils install to preserve extended attributes.
  *
  * Copyright 2014 Anthony G. Basile - <blueness@gentoo.org>
  * Copyright 2014 Mike Frysinger    - <vapier@gentoo.org>
