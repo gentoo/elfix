@@ -345,7 +345,7 @@ main(int argc, char* argv[])
 	char *portage_helper_path = getenv("__PORTAGE_HELPER_PATH");
 	char *portage_helper_canpath = NULL;
 	if (portage_helper_path)
-		if (chdir(oldpwd) != 0)
+		if (!oldpwd || chdir(oldpwd) != 0)
 			err(1, "failed to chdir %s", oldpwd);
 
 	switch (fork()) {
