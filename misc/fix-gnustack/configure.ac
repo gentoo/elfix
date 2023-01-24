@@ -16,11 +16,11 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_PREREQ([2.65])
-AC_INIT([fix-gnustack], [0.1], [http://bugs.gentoo.org/])
+AC_PREREQ([2.71])
+AC_INIT([fix-gnustack],[0.1],[https://bugs.gentoo.org/])
 AC_CONFIG_SRCDIR([fix-gnustack.c])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([1.11 foreign])
+AM_INIT_AUTOMAKE([1.15 foreign no-dist-gzip dist-xz])
 AM_SILENT_RULES([no])
 
 # Checks for programs.
