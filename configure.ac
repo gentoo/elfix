@@ -16,11 +16,12 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_PREREQ([2.68])
-AC_INIT([elfix], [0.9], [http://bugs.gentoo.org/])
+AC_PREREQ([2.71])
+AC_INIT([elfix],[0.9],[https://bugs.gentoo.org/])
 AC_CONFIG_SRCDIR([src/paxctl-ng.c])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([1.11 foreign])
+AC_CONFIG_MACRO_DIRS([m4])
+AM_INIT_AUTOMAKE([1.15 foreign no-dist-gzip dist-xz])
 AM_SILENT_RULES([no])
 
 LT_PREREQ([2.4])
