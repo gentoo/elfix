@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -ex
 
 touch a b c
 mkdir -p d e h
@@ -13,41 +13,41 @@ setfattr -n user.pax.flags -v "r" c
 ./install-xattr b y
 ./install-xattr c z
 
-[ "$(getfattr --only-values -n user.foo x)" == "bar" ]
-[ "$(getfattr --only-values -n user.bas x)" == "x" ]
-[ "$(getfattr --only-values -n user.pax.flags x)" == "mr" ]
-[ "$(getfattr --only-values -n user.pax.flags y)" == "p" ]
-[ "$(getfattr --only-values -n user.pax.flags z)" == "r" ]
+[[ "$(getfattr --only-values -n user.foo x)" == "bar" ]]
+[[ "$(getfattr --only-values -n user.bas x)" == "x" ]]
+[[ "$(getfattr --only-values -n user.pax.flags x)" == "mr" ]]
+[[ "$(getfattr --only-values -n user.pax.flags y)" == "p" ]]
+[[ "$(getfattr --only-values -n user.pax.flags z)" == "r" ]]
 
 ./install-xattr a b c d
 
-[ "$(getfattr --only-values -n user.foo d/a)" == "bar" ]
-[ "$(getfattr --only-values -n user.bas d/a)" == "x" ]
-[ "$(getfattr --only-values -n user.pax.flags d/a)" == "mr" ]
-[ "$(getfattr --only-values -n user.pax.flags d/b)" == "p" ]
-[ "$(getfattr --only-values -n user.pax.flags d/c)" == "r" ]
+[[ "$(getfattr --only-values -n user.foo d/a)" == "bar" ]]
+[[ "$(getfattr --only-values -n user.bas d/a)" == "x" ]]
+[[ "$(getfattr --only-values -n user.pax.flags d/a)" == "mr" ]]
+[[ "$(getfattr --only-values -n user.pax.flags d/b)" == "p" ]]
+[[ "$(getfattr --only-values -n user.pax.flags d/c)" == "r" ]]
 
 # This tests if the src file was inside a directory
 # the correct dst location should be f/a. NOT f/d/a.
 ./install-xattr d/a h
 
-[ -x h/a ]
-[ ! -x h/d/a ]
-[ "$(getfattr --only-values -n user.foo h/a)" == "bar" ]
-[ "$(getfattr --only-values -n user.bas h/a)" == "x" ]
+[[ -x h/a ]]
+[[ ! -x h/d/a ]]
+[[ "$(getfattr --only-values -n user.foo h/a)" == "bar" ]]
+[[ "$(getfattr --only-values -n user.bas h/a)" == "x" ]]
 
 ./install-xattr -t e a b c
 
-[ "$(getfattr --only-values -n user.foo e/a)" == "bar" ]
-[ "$(getfattr --only-values -n user.bas e/a)" == "x" ]
-[ "$(getfattr --only-values -n user.pax.flags e/a)" == "mr" ]
-[ "$(getfattr --only-values -n user.pax.flags e/b)" == "p" ]
-[ "$(getfattr --only-values -n user.pax.flags e/c)" == "r" ]
+[[ "$(getfattr --only-values -n user.foo e/a)" == "bar" ]]
+[[ "$(getfattr --only-values -n user.bas e/a)" == "x" ]]
+[[ "$(getfattr --only-values -n user.pax.flags e/a)" == "mr" ]]
+[[ "$(getfattr --only-values -n user.pax.flags e/b)" == "p" ]]
+[[ "$(getfattr --only-values -n user.pax.flags e/c)" == "r" ]]
 
 ./install-xattr a -D f/a
-[ "$(getfattr --only-values -n user.foo f/a)" == "bar" ]
-[ "$(getfattr --only-values -n user.bas f/a)" == "x" ]
-[ "$(getfattr --only-values -n user.pax.flags f/a)" == "mr" ]
+[[ "$(getfattr --only-values -n user.foo f/a)" == "bar" ]]
+[[ "$(getfattr --only-values -n user.bas f/a)" == "x" ]]
+[[ "$(getfattr --only-values -n user.pax.flags f/a)" == "mr" ]]
 
 # Check that we can copy large files
 truncate -s2G a
@@ -68,8 +68,8 @@ truncate -s2G a
 ./install-xattr -p a backup-a
 ./install-xattr -d g/g/g
 
-./install-xattr -o $(id -u) a mode-a
-./install-xattr -g $(id -g) a mode-a
+./install-xattr -o "$(id -u)" a mode-a
+./install-xattr -g "$(id -g)" a mode-a
 ./install-xattr -m 666 a mode-a
 
 # Let's abuse ourselves
