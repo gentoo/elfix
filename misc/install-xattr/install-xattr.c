@@ -20,19 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <ctype.h>
 #include <err.h>
 #include <fnmatch.h>
-#include <ctype.h>
 #include <getopt.h>
 #include <libgen.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
+#include <unistd.h>
 
 static char *
 xstrdup(const char *s)
@@ -301,7 +301,7 @@ main(int argc, char* argv[])
 	while (1) {
 		int option_index;
 		int c = getopt_long(argc, argv_copy, "dt:g:m:o:S:Zb", long_options, &option_index);
- 
+
 		if (c == -1)
 			break;
 
