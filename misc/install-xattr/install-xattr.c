@@ -22,9 +22,11 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fnmatch.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -115,13 +117,21 @@ copyxattr(const char *source, const char *target)
 	static char *value = NULL ;    /* string of an xattr name's value             */
 	static size_t value_size = 0;  /* size of the value string                    */
 
-	lsize = xlistxattr(source, NULL, 0);
-	lxattr = xmalloc(lsize);
-	xlistxattr(source, lxattr, lsize);
+	lsize = listxattr(source, NULL, 0);
+
+	if (lsize < 0) {
+		perror("listxattr() failed");
+		if (errno == ENOTSUP)
+			return;
+		exit(1);
+	}
 
 	/* There's no xattrs at all. */
 	if (lsize == 0)
 		return;
+
+	lxattr = xmalloc(lsize);
+	lsize = xlistxattr(source, lxattr, lsize);
 
 	i = 0;
 	while (1) {
