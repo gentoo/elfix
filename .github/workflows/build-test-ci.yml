@@ -24,7 +24,6 @@ jobs:
     env:
       CC: ${{ matrix.cc }}
       SANITIZER: ${{ matrix.sanitize }}
-      ASAN_OPTIONS: "detect_leaks=0" # known leaks in install-xattr
       UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
     steps:
     - name: Install dependencies
@@ -77,9 +76,3 @@ jobs:
        make V=1
        make V=1 check
        make V=1 distcheck
-
-    - name: Build (misc/install-xattr)
-      run: |
-       cd misc/install-xattr
-       make V=1
-       make check
