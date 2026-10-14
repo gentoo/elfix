@@ -30,16 +30,13 @@ AC_PROG_SED
 
 # Checks for header files.
 AC_CHECK_HEADERS(
-    [err.h fcntl.h gelf.h libgen.h stdlib.h string.h sys/stat.h sys/types.h unistd.h],
+    [gelf.h],
     [],
     [AC_MSG_ERROR(["Missing necessary header"])]
 )
 
 # Checks for DECLs.
 AC_CHECK_DECL([ELF_C_RDWR_MMAP],[],[],[[#include <libelf.h>]])
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_SIZE_T
 
 # Checks for library functions.
 AC_CHECK_LIB(
