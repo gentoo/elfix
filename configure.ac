@@ -32,26 +32,6 @@ AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_SED
 
-# Checks for header files.
-AC_CHECK_HEADERS(
-    [errno.h err.h fcntl.h libgen.h stdio.h stdlib.h string.h \
-    sys/mman.h sys/stat.h sys/types.h unistd.h],
-    [],
-    [AC_MSG_ERROR(["Missing necessary header"])]
-)
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_TYPE_UINT8_T
-AC_TYPE_UINT16_T
-
-# Checks for library functions.
-AC_FUNC_ERROR_AT_LINE
-AC_FUNC_FORK
-AC_FUNC_MMAP
-AC_CHECK_FUNCS([memset strerror])
-
 AC_ARG_ENABLE(
     [tests],
     AS_HELP_STRING(
